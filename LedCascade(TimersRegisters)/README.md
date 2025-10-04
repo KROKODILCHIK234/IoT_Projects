@@ -82,73 +82,75 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-// Определяем структуру для управления каждым светодиодом
+// Define a structure to manage each LED
 struct LedController {
-  const uint8_t pin;      // Пин, к которому подключен светодиод
-  const int reload_value; // Значение, на которое сбрасывается счетчик (период)
-  int countdown;          // Текущее значение обратного отсчета
+  const uint8_t pin;      // The pin the LED is connected to
+  const int reload_value; // The value to which the counter resets (the period)
+  int countdown;          // The current countdown value
 };
 
-// Создаем и инициализируем массив светодиодов
+// Create and initialize an array of LEDs
 LedController led_array[] = {
-  {PB0, 10, 10}, // Период 10 * 40 мс = 400 мс
-  {PB1, 20, 20}, // Период 20 * 40 мс = 800 мс
-  {PB2, 30, 30}, // Период 30 * 40 мс = 1200 мс
-  {PB4, 40, 40}, // Период 40 * 40 мс = 1600 мс
-  {PB5, 50, 50}  // Период 50 * 40 мс = 2000 мс
+  {PB0, 10, 10}, // Period 10 * 40 ms = 400 ms
+  {PB1, 20, 20}, // Period 20 * 40 ms = 800 ms
+  {PB2, 30, 30}, // Period 30 * 40 ms = 1200 ms
+  {PB4, 40, 40}, // Period 40 * 40 ms = 1600 ms
+  {PB5, 50, 50}  // Period 50 * 40 ms = 2000 ms
 };
 
-// Получаем количество светодиодов из размера массива
-const int number_of_leds = sizeof(led_array) / sizeof(led_array);
+// Get the number of LEDs from the size of the array
+const int number_of_leds = sizeof(led_array) / sizeof(led_array[0]);
 
-// Вспомогательная функция для настройки пинов
+// Helper function to configure GPIO pins
 void configure_gpio() {
   uint8_t pin_mask = 0;
   for (int i = 0; i < number_of_leds; i++) {
     pin_mask |= (1 << led_array[i].pin);
   }
-  DDRB |= pin_mask;  // Все пины как выходы
-  PORTB &= ~pin_mask; // Все светодиоды выключены
+  DDRB |= pin_mask;  // Set all selected pins as outputs
+  PORTB &= ~pin_mask; // Turn off all LEDs initially
 }
 
-// Вспомогательная функция для настройки таймера
+// Helper function to configure the timer
 void configure_timer_interrupts() {
-  cli();
+  cli(); // Disable global interrupts during setup
   
   TCCR1A = 0;
   TCCR1B = 0;
   
-  TCCR1B |= (1 << WGM12);             // Режим CTC
-  TCCR1B |= (1 << CS11) | (1 << CS10); // Предделитель 64
+  TCCR1B |= (1 << WGM12);             // Set CTC (Clear Timer on Compare Match) mode
+  TCCR1B |= (1 << CS11) | (1 << CS10); // Set prescaler to 64
   
-  OCR1A = 9999;                       // Прерывание каждые 40 мс
+  OCR1A = 9999;                       // Set compare value for a 40 ms interrupt
   
-  TIMSK1 |= (1 << OCIE1A);            // Разрешить прерывание по совпадению
+  TIMSK1 |= (1 << OCIE1A);            // Enable interrupt on compare match A
   
-  sei();
+  sei(); // Enable global interrupts
 }
 
-// Основная функция настройки
+// Main setup function, runs once at the beginning
 void setup() {
   configure_gpio();
   configure_timer_interrupts();
 }
 
-// Обработчик прерывания
+// Interrupt Service Routine (ISR) for Timer1 Compare Match A
 ISR(TIMER1_COMPA_vect) {
   for (int i = 0; i < number_of_leds; i++) {
     led_array[i].countdown--;
 
     if (led_array[i].countdown == 0) {
+      // Toggle the LED state using XOR
       PORTB ^= (1 << led_array[i].pin);
+      // Reset the countdown timer
       led_array[i].countdown = led_array[i].reload_value;
     }
   }
 }
 
-// Основной цикл остается пустым
+// The main loop remains empty
 void loop() {
-  // Вся работа выполняется в прерываниях, процессор свободен
+  // All work is done asynchronously in the ISR, so the CPU is free for other tasks.
 }
 ```
 
