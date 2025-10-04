@@ -8,7 +8,7 @@ const int blink_tick_rates[LED_COUNT] = {10, 20, 30, 40, 50};
 
 volatile unsigned long master_tick_count = 0;
 
-void initialize_hardware() {
+void setup() {
   uint8_t portb_init_mask = 0;
   for (int i = 0; i < LED_COUNT; i++) {
     portb_init_mask |= (1 << led_portb_pins[i]);
@@ -41,5 +41,6 @@ ISR(TIMER1_COMPA_vect) {
   }
 }
 
-void main_loop() {
+void loop() {
+  
 }
