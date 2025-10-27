@@ -460,7 +460,8 @@ if __name__ == "__main__":
 
 ### 5.3. Ссылки
 
-*   **[Ссылка на проект в Tinkercad ]([https://www.tinkercad.com/things/kJ1fYI45jP3-ledphotoserialmqtt?sharecode=OP_Hn8TEL4GAGT6yfM8pQaBNLzBAjWGCRpqsuxa5EgM](https://www.tinkercad.com/things/kJ1fYI45jP3-ledphotoserialmqtt?sharecode=OP_Hn8TEL4GAGT6yfM8pQaBNLzBAjWGCRpqsuxa5EgM))**
+*   **[Ссылка на проект в Tinkercad ]
+*   ([https://www.tinkercad.com/things/kJ1fYI45jP3-ledphotoserialmqtt?sharecode=OP_Hn8TEL4GAGT6yfM8pQaBNLzBAjWGCRpqsuxa5EgM](https://www.tinkercad.com/things/kJ1fYI45jP3-ledphotoserialmqtt?sharecode=OP_Hn8TEL4GAGT6yfM8pQaBNLzBAjWGCRpqsuxa5EgM))**
 
 ## 6. Вывод
 
