@@ -1,4 +1,4 @@
-
+ 
 ---
 
 # Проект `LedPhotoSerialMQTT`: Распределенная IoT-система управления освещением
@@ -98,10 +98,7 @@ pip install paho-mqtt pyserial
 
 **Код для Узла-Сенсора (файл `light_sensor_node.ino`):**
 ```cpp
-/**
- * @file light_sensor_node.ino
- * @brief Прошивка для микроконтроллера, считывающего данные с фоторезистора.
- */
+
 #define LDR_PIN A0
 #define STREAM_INTERVAL 2000
 
@@ -152,10 +149,7 @@ void reportLuminosity() {
 
 **Код для Узла-Исполнителя (файл `led_actuator_node.ino`):**
 ```cpp
-/**
- * @file led_actuator_node.ino
- * @brief Прошивка для микроконтроллера, управляющего светодиодом.
- */
+
 #define LED_PIN 13
 #define BLINK_RATE 500
 
@@ -269,7 +263,6 @@ import time
 import paho.mqtt.client as mqtt
 import random
 
-# --- НАСТРОЙКИ ---
 SERIAL_PORT = '/dev/ttyUSB0'
 BAUD_RATE = 9600
 
@@ -279,7 +272,6 @@ CLIENT_ID = f'iot-project-sensor-publisher-{random.randint(0, 1000)}'
 
 LUMINOSITY_TOPIC = "iot/v2/home/light_level"
 STATUS_TOPIC = "iot/v2/home/sensor_gateway_status"
-# --- КОНЕЦ НАСТРОЕК ---
 
 class SensorGateway:
     def __init__(self, serial_port, baud_rate, broker_address, broker_port):
@@ -362,7 +354,6 @@ import time
 import paho.mqtt.client as mqtt
 import random
 
-# --- НАСТРОЙКИ ---
 SERIAL_PORT = '/dev/ttyUSB1'
 BAUD_RATE = 9600
 
@@ -375,7 +366,6 @@ LIGHT_STATE_TOPIC = "iot/v2/home/light_actual_state"
 STATUS_TOPIC = "iot/v2/home/actuator_controller_status"
 
 LUMINOSITY_THRESHOLD = 400
-# --- КОНЕЦ НАСТРОЕК ---
 
 class ActuatorController:
     def __init__(self, serial_port, baud_rate, broker_address, broker_port):
