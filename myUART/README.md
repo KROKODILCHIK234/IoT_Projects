@@ -182,7 +182,7 @@ void loop() {
 
 Корректность работы алгоритма и схемы была предварительно проверена в среде моделирования Tinkercad. Симуляция демонстрирует стабильный двусторонний обмен данными между двумя виртуальными платами.
 
-**[Ссылка на симуляцию в Tinkercad]([https://www.tinkercad.com/things/f64J3D1R3p3-software-uart-demo](https://www.tinkercad.com/things/6QqapanaA1n-myuart?sharecode=BcQKNHFaL3I_8KSOyDPMcD3PaHby5LQK_hAZ_XzjUr4))**
+**[Ссылка на симуляцию в Tinkercad] ([https://www.tinkercad.com/things/f64J3D1R3p3-software-uart-demo](https://www.tinkercad.com/things/6QqapanaA1n-myuart?sharecode=BcQKNHFaL3I_8KSOyDPMcD3PaHby5LQK_hAZ_XzjUr4))**
 
 ### 4.2. Демонстрация на физическом устройстве
 
