@@ -176,8 +176,7 @@ ISR(TIMER1_COMPA_vect) {
 }
 
 ### 4.2. Ссылка на проект
-Полная симуляция схемы и кода доступна по ссылке ниже:
-**[Tinkercad Project: Matrix Keypad Controller](https://www.tinkercad.com/things/76A0IHrQG1a-buttonmatrix)**
+Полная симуляция схемы и кода доступна по ссылке: [Tinkercad Project: Matrix Keypad Controller](https://www.tinkercad.com/things/76A0IHrQG1a-buttonmatrix)
 
 ---
 
