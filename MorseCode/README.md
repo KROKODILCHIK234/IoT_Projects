@@ -4,7 +4,7 @@
 
 ## Ссылки 
 
-* [**Симуляция Tinkercad**](https://www.tinkercad.com/things/biTb7GczJ4b-morsecode)
+* [**Симуляция Tinkercad**](https://www.tinkercad.com/things/hiCZYPytYUH-morsecode)
 * [**Видео-демонстрация**](https://disk.yandex.ru/d/Akw_K23gmVyccg)
 
 
