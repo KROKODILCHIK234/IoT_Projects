@@ -1,30 +1,26 @@
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
+#include <Arduino.h>
 
-#define BOARD_ID 1
-
-LiquidCrystal_I2C lcd(0x27, 16, 2); 
-
-const int RX_PIN = 7;     
+const int RX_PIN = 2;     
 const int TX_PIN = 8;     
 const int LED_PIN = 9;    
 const int BTN_PIN = 4;    
 
-// Тайминги
-const int dotLen = 300; 
-const int dashThreshold = dotLen * 1.5; 
-const int letterGap = dotLen * 3; 
 
-// Переменные (RX)
+const int dotLen = 200;        
+const int dashThreshold = 400; 
+const int letterGap = 600;     
+
+
+volatile unsigned long signalStart = 0;
+volatile unsigned long lastPulseDuration = 0;
+volatile bool pulseReady = false; 
+volatile bool signalActive = false; 
+
 String rxBuffer = "";       
-unsigned long rxSignalStart = 0;
-unsigned long rxSignalEnd = 0;
-bool isReceiving = false;
-String currentLineText = ""; 
+unsigned long lastSignalTime = 0; 
 
-// Переменные ручной отпраки(TX Manual)
-// Нужны, чтобы расшифровать свой же стук для лога
-String txManualBuffer = "";
+
+String manualBuffer = "";
 unsigned long btnPressStart = 0;
 bool isBtnPressed = false;
 unsigned long lastBtnRelease = 0;
@@ -53,167 +49,138 @@ const char* numbers[] = {
   "-----", ".----", "..---", "...--", "....-", ".....", "-....", "--...", "---..", "----."
 };
 
+void rxISR() {
+  int state = digitalRead(RX_PIN); 
+
+  if (state == HIGH) {
+
+    signalStart = millis();
+    signalActive = true;
+ 
+    digitalWrite(LED_PIN, HIGH); 
+  } 
+  else {
+
+    lastPulseDuration = millis() - signalStart;
+    signalActive = false;
+    pulseReady = true; 
+    digitalWrite(LED_PIN, LOW);
+  }
+}
+
 void setup() {
-  pinMode(RX_PIN, INPUT);
+  pinMode(RX_PIN, INPUT); 
   pinMode(TX_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
   pinMode(BTN_PIN, INPUT_PULLUP);
+  
   Serial.begin(9600);
+  Serial.println("--- INTERRUPT MORSE SYSTEM ---");
+  Serial.println("Ensure RX is connected to PIN 2!");
 
-  Serial.print("SYSTEM START | ID: ");
-  Serial.print(BOARD_ID);
 
-  if (BOARD_ID == 1) {
-    lcd.init(); 
-    lcd.backlight();
-    lcd.setCursor(0, 0); lcd.print("ID1: Ready");
-    lcd.setCursor(0, 1); lcd.print("ID2: Waiting");
-    delay(1000);
-    lcd.clear();
-  } else {
-    Wire.begin();
-    lcd.setBacklight(HIGH); 
-    delay(1500); 
-  }
+  attachInterrupt(digitalPinToInterrupt(RX_PIN), rxISR, CHANGE);
 }
 
-void writeToLcd(char c) {
-  int targetRow = (BOARD_ID == 1) ? 1 : 0;
-  
-  currentLineText += c;
-  
-  // Рандомная задержка для защиты шины I2C,
-  // чтобы избежать множественного Master'а
-  delay(random(5, 15)); 
+void processInterruptData() {
 
-  lcd.setCursor(0, targetRow);
-  if (currentLineText.length() > 16) {
-    lcd.print(currentLineText.substring(currentLineText.length() - 16));
-  } else {
-    lcd.print(currentLineText);
-  }
-}
+  if (pulseReady) {
 
-// Проверка входящих
-void checkRx() {
-  int sensorVal = digitalRead(RX_PIN);
-  
-  if (sensorVal == HIGH && !isReceiving) {
-    rxSignalStart = millis();
-    isReceiving = true;
-    digitalWrite(LED_PIN, HIGH); 
-  }
+    noInterrupts();
+    pulseReady = false;
+    unsigned long duration = lastPulseDuration;
+    interrupts();
 
-  if (sensorVal == LOW && isReceiving) {
-    isReceiving = false;
-    digitalWrite(LED_PIN, LOW);
-    unsigned long duration = millis() - rxSignalStart;
-    rxSignalEnd = millis();
+    lastSignalTime = millis();
 
-    if (duration > 30) {
+
+    if (duration > 30) { 
       if (duration < dashThreshold) rxBuffer += ".";
       else rxBuffer += "-";
     }
   }
 
-  if (!isReceiving && rxBuffer.length() > 0) {
-    if (millis() - rxSignalEnd > letterGap) {
+  if (!signalActive && rxBuffer.length() > 0) {
+    if (millis() - lastSignalTime > letterGap) {
       char c = decode(rxBuffer);
-      
-      Serial.print(" [RX] Received: "); 
-      Serial.print(c);
-      Serial.print(" (Code: ");
-      Serial.print(rxBuffer);
-      Serial.println(")");
-      
-      writeToLcd(c);
+      Serial.print("RX (INT): "); Serial.println(c);
       rxBuffer = "";
     }
   }
 }
 
-// Задержка
 void smartWait(unsigned long ms) {
-  unsigned long t = millis();
-  while (millis() - t < ms) {
-    checkRx();
+  unsigned long start = millis();
+  while (millis() - start < ms) {
+    processInterruptData(); 
+    handleButton(); 
   }
 }
 
-// Отправка SERIAL
+
 void sendPulse(const char* code) {
+
+  detachInterrupt(digitalPinToInterrupt(RX_PIN));
+
   int i = 0;
   while (code[i] != '\0') {
     digitalWrite(TX_PIN, HIGH);
+    digitalWrite(LED_PIN, HIGH);
     if (code[i] == '.') smartWait(dotLen);
     else smartWait(dotLen * 3);
     digitalWrite(TX_PIN, LOW);
+    digitalWrite(LED_PIN, LOW);
     smartWait(dotLen);
     i++;
   }
   smartWait(dotLen * 3);
+  
+  attachInterrupt(digitalPinToInterrupt(RX_PIN), rxISR, CHANGE);
 }
 
-// Ручной ввод
 void handleButton() {
   int btnVal = digitalRead(BTN_PIN);
 
-  // Нажатие
   if (btnVal == LOW && !isBtnPressed) {
     isBtnPressed = true;
     btnPressStart = millis();
     digitalWrite(TX_PIN, HIGH);
+    digitalWrite(LED_PIN, HIGH);
   }
 
-  // Отпускание
   if (btnVal == HIGH && isBtnPressed) {
     isBtnPressed = false;
     unsigned long duration = millis() - btnPressStart;
     digitalWrite(TX_PIN, LOW);
+    digitalWrite(LED_PIN, LOW);
     lastBtnRelease = millis();
 
     if (duration > 30) {
-      if (duration < dashThreshold) txManualBuffer += ".";
-      else txManualBuffer += "-";
+      if (duration < dashThreshold) manualBuffer += ".";
+      else manualBuffer += "-";
     }
   }
 
-  // Декодирование своего стука для лога
-  if (!isBtnPressed && txManualBuffer.length() > 0) {
+  if (!isBtnPressed && manualBuffer.length() > 0) {
     if (millis() - lastBtnRelease > letterGap) {
-      char c = decode(txManualBuffer);
-      
-      Serial.print(" [TX Manual] Sent: ");
-      Serial.println(c);
-      
-      txManualBuffer = "";
+      char c = decode(manualBuffer);
+      Serial.print("YOU SENT: "); Serial.println(c);
+      manualBuffer = "";
     }
   }
 }
 
 void loop() {
-  // 1. Слушаем эфир
-  checkRx();
 
-  // 2. Обрабатываем кнопку и логируем свои нажатия
+  processInterruptData();
+
   handleButton();
 
-  // 3. Обрабатываем ввод с клавиатуры
   if (Serial.available()) {
     char c = Serial.read();
     c = toupper(c);
-    
-    if (c >= 'A' && c <= 'Z') {
-      Serial.print(" [TX Serial] Sending: "); Serial.println(c);
-      sendPulse(letters[c - 'A']);
-    } 
-    else if (c >= '0' && c <= '9') {
-      Serial.print(" [TX Serial] Sending: "); Serial.println(c);
-      sendPulse(numbers[c - '0']);
-    } 
-    else if (c == ' ') {
-      Serial.println(" [TX Serial] Sending: SPACE");
-      smartWait(dotLen * 7);
-    }
+    if (c >= 'A' && c <= 'Z') sendPulse(letters[c - 'A']);
+    else if (c >= '0' && c <= '9') sendPulse(numbers[c - '0']);
+    else if (c == ' ') smartWait(dotLen * 7);
   }
 }
