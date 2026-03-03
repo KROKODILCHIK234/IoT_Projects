@@ -68,6 +68,6 @@ void loop() {
   rotate_right(255);
   delay(2000);
   
-  move(FORWARD_LEFT, 0, FORWARD_RIGHT, 0); // Стоп
+  move(FORWARD_LEFT, 0, FORWARD_RIGHT, 0); 
   delay(3000);
 }
